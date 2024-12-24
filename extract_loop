@@ -44,10 +44,15 @@ fi
 # Check if the Docker image exists; if not, build it
 if ! docker image inspect "$IMAGE_NAME" >/dev/null 2>&1; then
   echo "Docker image '$IMAGE_NAME' not found. Building the image..."
-  # Validate build script
   BUILD_SCRIPT="$SCRIPT_DIR/build_img"
+  # Check if the build script exists
+  if [ ! -f "$BUILD_SCRIPT" ]; then
+    echo "Error: Build script '$BUILD_SCRIPT' not found." >&2
+    exit 1
+  fi
+  # Check if the build script is executable
   if [ ! -x "$BUILD_SCRIPT" ]; then
-    echo "Error: Build script '$BUILD_SCRIPT' not found or not executable." >&2
+    echo "Error: Build script '$BUILD_SCRIPT' is not executable." >&2
     exit 1
   fi
   echo "Using build script: $BUILD_SCRIPT"
