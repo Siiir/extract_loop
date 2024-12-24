@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# Default paths for input and output
+INPUT_FILE=${1:-"$(pwd)/input.mp3"}
+OUTPUT_DIR=${2:-"$(pwd)/output"}
+
+# Ensure output directory exists
+mkdir -p "$OUTPUT_DIR"
+
+# Run the container with automated volume bindings
+docker run --rm \
+  -v "$INPUT_FILE:/app/input.mp3" \
+  -v "$OUTPUT_DIR:/app/output" \
+  extract_loop
+
