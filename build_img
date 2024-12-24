@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# Exit immediately if any command fails
+set -e
+
+# Get the directory of the script
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+
+# The build command
+docker build -t extract_loop "${1:-$SCRIPT_DIR}"

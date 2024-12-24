@@ -1,15 +1,67 @@
 #!/bin/bash
 
+# Exit immediately if any command fails
+set -e
+
+if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+  echo "Usage: $0 [input_file] [output_directory]"
+  echo "  input_file        Path to the input audio file (default: $SCRIPT_DIR/input.mp3)"
+  echo "  output_directory  Path to the output directory (default: $SCRIPT_DIR/output)"
+  exit 0
+fi
+
+# Docker image name
+IMAGE_NAME="extract_loop"
+# Get the directory of the script
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+
+# Validate Docker binary
+if ! command -v docker &>/dev/null; then
+  echo "Error: Docker is not installed or not in the PATH." >&2
+  exit 1
+fi
+
 # Default paths for input and output
-INPUT_FILE=${1:-"$(pwd)/input.mp3"}
-OUTPUT_DIR=${2:-"$(pwd)/output"}
+INPUT_FILE=${1:-"$SCRIPT_DIR/input.mp3"}
+INPUT_EXT="${INPUT_FILE##*.}"
+OUTPUT_DIR=${2:-"$SCRIPT_DIR/output"}
+INTERNAL_IFILE="/app/input.$INPUT_EXT"
+INTERNAL_ODIR="/app/output"
+
+# Log paths
+echo "Parameters for the 'extract_loop' docker container:"
+echo "  Input File: $INPUT_FILE"
+echo "  Output Directory: $OUTPUT_DIR"
+echo "  Internal Input Path: $INTERNAL_IFILE"
+echo "  Internal Output Path: $INTERNAL_ODIR"
+
+# Validate input file
+if [ ! -f "$INPUT_FILE" ]; then
+  echo "Error: Input file '$INPUT_FILE' does not exist." >&2
+  exit 1
+fi
+
+# Check if the Docker image exists; if not, build it
+if ! docker image inspect "$IMAGE_NAME" >/dev/null 2>&1; then
+  echo "Docker image '$IMAGE_NAME' not found. Building the image..."
+  # Validate build script
+  BUILD_SCRIPT="$SCRIPT_DIR/build_img"
+  if [ ! -x "$BUILD_SCRIPT" ]; then
+    echo "Error: Build script '$BUILD_SCRIPT' not found or not executable." >&2
+    exit 1
+  fi
+  echo "Using build script: $BUILD_SCRIPT"
+  "$BUILD_SCRIPT"
+fi
 
 # Ensure output directory exists
 mkdir -p "$OUTPUT_DIR"
 
 # Run the container with automated volume bindings
+echo "Running the 'extract_loop' docker container..."
 docker run --rm \
-  -v "$INPUT_FILE:/app/input.mp3" \
-  -v "$OUTPUT_DIR:/app/output" \
-  extract_loop
-
+  -v "$INPUT_FILE":"$INTERNAL_IFILE":ro \
+  -v "$OUTPUT_DIR":"$INTERNAL_ODIR" \
+  "$IMAGE_NAME" \
+  "$INTERNAL_IFILE" \
+  "$INTERNAL_ODIR/experimental_prefix"

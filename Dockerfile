@@ -23,4 +23,4 @@ WORKDIR /app
 
 # Default command to process a single input file
 # Takes the first argument as the input file path and the second argument as the output directory
-ENTRYPOINT ["python", "/app/loopextractor/loopextractor/loopextractor.py", "/app/input.mp3", "/app/output/experimental_prefix"]
+ENTRYPOINT ["python", "/app/loopextractor/loopextractor/loopextractor.py"]
